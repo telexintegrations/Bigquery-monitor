@@ -13,15 +13,7 @@ import json
 app = FastAPI()
 
 origins = [
-    "http://localhost",
-    "https://telex.im",
-    "http://telex.im/",
-    "https://staging.telex.im",
-    "http://staging.telex.im",
-    "http://telextest.im",
-    "http://staging.telextest.im",
-    "https://staging.telextest.im",
-    "https://telextest.im"
+    "*"
 ]
 
 app.add_middleware(
