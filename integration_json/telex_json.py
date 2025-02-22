@@ -7,7 +7,7 @@ integration_json = {
     "descriptions": {
       "app_name": "BigQuery Performance and Health Monitor",
       "app_description": "Monitor and report daily resource utilization and job run errors in BigQuery.",
-      "app_logo": "https://imgur.com/a/BsoJdfa",
+      "app_logo": "https://imgur.com/a/dnbdPgg",
       "app_url": "https://bigquery-monitor.onrender.com/",
       "background_color": "#065a96"
     },
