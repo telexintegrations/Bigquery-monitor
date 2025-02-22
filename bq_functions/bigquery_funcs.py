@@ -1,18 +1,16 @@
 from google.cloud import bigquery
 from google.oauth2 import service_account, credentials
-import asyncio
-import json
 
-async def get_daily_slot_utilization(client:bigquery.Client) -> dict:
+async def get_daily_slot_utilization(client:bigquery.Client, region:str = "us") -> dict:
     """
     Get daily slot utilization
     """
     query = f"""
     SELECT
         FORMAT_DATE('%A', DATE_TRUNC(end_time, DAY)) as day_of_week,
-        SUM(TIMESTAMP_DIFF(end_time, start_time, SECOND)) as total_daily_slot_ms
+        SUM(TIMESTAMP_DIFF(end_time, start_time, MILLISECOND)) as total_daily_slot_ms
     FROM
-        `region-us`.INFORMATION_SCHEMA.JOBS
+        `region-{region}`.INFORMATION_SCHEMA.JOBS
     WHERE
         state = "DONE"
         AND DATE_TRUNC(end_time, DAY) BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 DAY) AND CURRENT_TIMESTAMP()
@@ -30,10 +28,13 @@ async def get_daily_slot_utilization(client:bigquery.Client) -> dict:
         return daily_utilization
     listed_results = []
     for row in results:
-        daily_utilization[row[0]] = row[1]
+        daily_utilization[row[0]] = str(row[1]) + " slot ms"
         listed_results.append(int(row[1
         ]))
-    daily_utilization["percentage change"] = int(((listed_results[1] - listed_results[0]) / listed_results[0]) * 100)     
+    if len(listed_results) < 2:
+        return daily_utilization
+    percentage_change = int((listed_results[1] - listed_results[0])) / listed_results[0]     
+    daily_utilization["percentage change"] = f"{percentage_change:.2%}"
     return daily_utilization
 
 # async def get_performance_insights(client: bigquery.Client) -> dict:
@@ -74,7 +75,7 @@ async def get_daily_slot_utilization(client:bigquery.Client) -> dict:
 #         }   
 #     return performance_insights
 
-async def get_run_errors(client: bigquery.Client) -> dict:
+async def get_run_errors(client: bigquery.Client, region:str = "us") -> dict:
     """
     Get daily job run errors
     """
@@ -87,11 +88,11 @@ async def get_run_errors(client: bigquery.Client) -> dict:
         end_time,
         priority,
         total_bytes_processed,
-        TIMESTAMP_DIFF(end_time, start_time, SECOND) as duration_seconds,
+        TIMESTAMP_DIFF(end_time, start_time, MILLISECOND) as duration_seconds,
         user_email,
         query_info.resource_warning
     FROM
-        `region-us`.INFORMATION_SCHEMA.JOBS_BY_PROJECT
+        `region-{region}`.INFORMATION_SCHEMA.JOBS_BY_PROJECT
     WHERE
         end_time BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY) AND CURRENT_TIMESTAMP()
         AND error_result IS NOT NULL
@@ -111,26 +112,26 @@ async def get_run_errors(client: bigquery.Client) -> dict:
             "end_time": row[4],
             "priority": row[5],
             "total_bytes_processed": row[6],
-            "duration_seconds": row[7],
+            "duration_seconds": str(row[7]) + " slot milliseconds",
             "user_email": row[8],
             "resource_warning": row[9]
         }
     return error_reports
 
-async def main():
-    reports = {}
-    reports["Daily slots usage in seconds"], reports["Error report by JobID"] = await asyncio.gather(get_daily_slot_utilization(client), get_run_errors(client))
+# async def main():
+#     reports = {}
+#     reports["Daily slots usage in seconds"], reports["Error report by JobID"] = await asyncio.gather(get_daily_slot_utilization(client), get_run_errors(client))
     
-    print(json.dumps(reports, indent=2, default=str))
+#     print(json.dumps(reports, indent=2, default=str))
 
-if __name__ == "__main__":
-    with open("./sa_key.json") as json_file:
-        json_service_key = json.load(json_file)
+# if __name__ == "__main__":
+#     with open("./sa_key.json") as json_file:
+#         json_service_key = json.load(json_file)
 
-    creds = service_account.Credentials.from_service_account_info(json_service_key)
-    scoped_credentials = creds.with_scopes(['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/bigquery'])
-    project_id = "hng13-backend-projects"
+#     creds = service_account.Credentials.from_service_account_info(json_service_key)
+#     scoped_credentials = creds.with_scopes(['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/bigquery'])
+#     project_id = "hng13-backend-projects"
 
-    client = bigquery.Client(credentials=scoped_credentials, project=project_id)
-    asyncio.run(main())
+#     client = bigquery.Client(credentials=scoped_credentials, project=project_id)
+#     asyncio.run(main())
     

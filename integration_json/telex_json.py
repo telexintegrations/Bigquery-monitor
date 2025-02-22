@@ -6,7 +6,7 @@ integration_json = {
     },
     "descriptions": {
       "app_name": "BigQuery Performance and Health Monitor",
-      "app_description": "Monitor and report spikes in day-on-day execution stats of BigQuery jobs.",
+      "app_description": "Monitor and report daily resource utilization and job run errors in BigQuery.",
       "app_logo": "https://imgur.com/a/BsoJdfa",
       "app_url": "https://bigquery-monitor.onrender.com/",
       "background_color": "#065a96"
@@ -16,8 +16,8 @@ integration_json = {
     "is_active": True,
     "author": "Sulaimon Salako",
     "key_features": [
-      "Report spike in job (qurey) execution stats",
-      "Report spike in resource utilization."
+      "Report daily slot utilization, in seconds, and with day-on-day percentage change.",
+      "Report job run errors for the day."
     ],
     "settings": [
       {
