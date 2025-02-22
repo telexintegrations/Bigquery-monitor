@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 import httpx
 import json
+
 app = FastAPI()
 
 origins = [
@@ -20,13 +21,13 @@ origins = [
     "http://telextest.im",
     "http://staging.telextest.im",
     "https://staging.telextest.im",
-    "https://telextest.im",
+    "https://telextest.im"
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
