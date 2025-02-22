@@ -35,7 +35,10 @@ def get_integration_json(request: Request):
 @app.post("/tick")
 async def get_performance_reports(payload: ReportPayload):
     sa_key = (dict(payload.settings[1])["default"])
-    sa_key_json = sa_key.model_dump_json()
+    if isinstance(sa_key, str):
+        sa_key_json = json.dumps(sa_key)
+    else:
+        sa_key_json = sa_key.model_dump_json()
     project_id = dict(payload.settings[3])["default"]
     region = dict(payload.settings[4])["default"]
 
