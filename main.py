@@ -14,7 +14,7 @@ app = FastAPI()
 
 origins = [
     "http://localhost",
-    "https://telex.im/",
+    "https://telex.im",
     "http://telex.im/",
     "https://staging.telex.im",
     "http://staging.telex.im",
