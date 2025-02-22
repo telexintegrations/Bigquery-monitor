@@ -71,8 +71,10 @@ async def get_performance_reports(payload: ReportPayload):
             try:
                 response = await client.post(payload.return_url, json=data)
                 response.raise_for_status()
+                print(response.status_code)
                 return JSONResponse(content={"status": "success"})
             except(httpx.HTTPStatusError, httpx.RequestError) as exc:
                 if attempt == 2:
+                    print(f"Failed to send report: {str(exc)}")
                     return JSONResponse(content={"status": "failed", "error": str(exc)})
                 await asyncio.sleep(2)
