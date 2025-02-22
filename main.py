@@ -1,14 +1,15 @@
-from bigquery_funcs import get_daily_slot_utilization, get_run_errors
+from bq_functions.bigquery_funcs import get_daily_slot_utilization, get_run_errors
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from google.oauth2 import service_account, credentials
-from google.cloud import bigquery
-from models import ReportPayload
-from telex_json import integration_json
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from google.cloud import bigquery
+from google.oauth2 import service_account
+from integration_json.telex_json import integration_json
+from models.models import ReportPayload
 import asyncio
 import httpx
 import json
+import time
 
 app = FastAPI()
 
@@ -33,12 +34,10 @@ def get_integration_json(request: Request):
 
 @app.post("/tick")
 async def get_performance_reports(payload: ReportPayload):
-    channel_id = payload.channel_id
-    
     sa_key = (dict(payload.settings[1])["default"])
     sa_key_json = sa_key.model_dump_json()
     project_id = dict(payload.settings[3])["default"]
-    # region = dict(payload.settings[4])["default"]
+    region = dict(payload.settings[4])["default"]
 
     credentials = service_account.Credentials.from_service_account_info(json.loads(sa_key_json))
     scoped_credentials = credentials.with_scopes(['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/bigquery'])
@@ -46,26 +45,23 @@ async def get_performance_reports(payload: ReportPayload):
     bigquery_client = bigquery.Client(credentials=scoped_credentials, project=project_id)
     
     reports = {}
-
-    reports["Daily Resource Utilization Report"], reports["Error Reports"] = await asyncio.gather(get_daily_slot_utilization(bigquery_client), get_run_errors(bigquery_client))
+    reports["Date"] = time.strftime("%Y-%m-%d")
+    reports["\nDaily Resource Utilization Report"], reports["\nError Reports"] = await asyncio.gather(get_daily_slot_utilization(bigquery_client, region=region), get_run_errors(bigquery_client, region=region))
 
     data = {
-        "message": reports,
+        "message": str(reports),
         "username": "BigQuery Monitor",
-        "event_name": "BigQuery Resources Checkin",
+        "event_name": "BigQuery Resources Check-In",
         "status": "success"
     }
 
-    data = json.dumps(data, indent=2, default=str)
-
-    async with httpx.AsyncClient(timeout=httpx.Timeout(10.0, read=None)) as client:
-        try:
-            print(payload.return_url)
-            response = await client.post(payload.return_url, json=data, headers={"Content-Type": "application/json", "Accept": "application/json"})
-            print(response.status_code)
-            response.raise_for_status()
-            return JSONResponse(content={"status": "success"})
-        except httpx.HTTPStatusError as exc:
-            return JSONResponse(content={"status": "failed", "error": str(exc)})
-        except httpx.RequestError as exc:
-            return JSONResponse(content={"status": "failed", "error": str(exc)})
+    for attempt in range(3):
+        async with httpx.AsyncClient(timeout=httpx.Timeout(10.0, read=None)) as client:
+            try:
+                response = await client.post(payload.return_url, json=data)
+                response.raise_for_status()
+                return JSONResponse(content={"status": "success"})
+            except(httpx.HTTPStatusError, httpx.RequestError) as exc:
+                if attempt == 2:
+                    return JSONResponse(content={"status": "failed", "error": str(exc)})
+                await asyncio.sleep(2)
