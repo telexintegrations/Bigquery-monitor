@@ -1,3 +1,4 @@
+from ast import literal_eval
 from bq_functions.bigquery_funcs import get_daily_slot_utilization, get_run_errors
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,7 +38,7 @@ async def get_performance_reports(payload: ReportPayload):
     sa_key = (dict(payload.settings[1])["default"])
     print(type(sa_key))
     if isinstance(sa_key, str):
-        sa_key_json = json.dumps(sa_key)
+        sa_key_json = json.loads(sa_key)
     else:
         sa_key_json = sa_key.model_dump_json()
     
