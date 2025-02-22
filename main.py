@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from integration_json.telex_json import integration_json
-from models.models import ReportPayload
+from models.models import ReportPayload, convert_reports_to_string
 import asyncio
 import httpx
 import json
@@ -56,11 +56,12 @@ async def get_performance_reports(payload: ReportPayload):
     bigquery_client = bigquery.Client(credentials=scoped_credentials, project=project_id)
     
     reports = {}
-    reports["Date"] = time.strftime("%Y-%m-%d")
-    reports["\nDaily Resource Utilization Report"], reports["\nError Reports"] = await asyncio.gather(get_daily_slot_utilization(bigquery_client, region=region), get_run_errors(bigquery_client, region=region))
+    reports["Daily Resource Utilization Report"], reports["Error Reports"] = await asyncio.gather(get_daily_slot_utilization(bigquery_client, region=region), get_run_errors(bigquery_client, region=region))
 
+    reports = convert_reports_to_string(reports)
+    
     data = {
-        "message": str(reports),
+        "message": reports,
         "username": "BigQuery Monitor",
         "event_name": "BigQuery Resources Check-In",
         "status": "success"
@@ -72,7 +73,7 @@ async def get_performance_reports(payload: ReportPayload):
                 response = await client.post(payload.return_url, json=data)
                 response.raise_for_status()
                 print(response.status_code)
-                return JSONResponse(content={"status": "success"})
+                return JSONResponse(content={"status": "success", "data": data})
             except(httpx.HTTPStatusError, httpx.RequestError) as exc:
                 if attempt == 2:
                     print(f"Failed to send report: {str(exc)}")
