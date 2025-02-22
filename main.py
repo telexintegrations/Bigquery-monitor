@@ -41,11 +41,12 @@ async def get_performance_reports(payload: ReportPayload):
         sa_key_json = json.loads(sa_key)
     else:
         sa_key_json = sa_key.model_dump_json()
+        sa_key_json = json.loads(sa_key_json)
     
     project_id = dict(payload.settings[3])["default"]
     region = dict(payload.settings[4])["default"]
 
-    credentials = service_account.Credentials.from_service_account_info(json.loads(sa_key_json))
+    credentials = service_account.Credentials.from_service_account_info(sa_key_json)
     scoped_credentials = credentials.with_scopes(['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/bigquery'])
     
     bigquery_client = bigquery.Client(credentials=scoped_credentials, project=project_id)
