@@ -15,7 +15,10 @@ import time
 app = FastAPI()
 
 origins = [
-    "*"
+    "https://telex.im",
+    "https://*.telex.im",
+    "http://telextest.im",
+    "http://staging.telextest.im"
 ]
 
 app.add_middleware(
@@ -36,7 +39,8 @@ def get_integration_json(request: Request):
 @app.post("/tick")
 async def get_performance_reports(payload: ReportPayload):
     sa_key = (dict(payload.settings[1])["default"])
-    print(type(sa_key))
+
+    # Handle the case where the service account key is a string
     if isinstance(sa_key, str):
         sa_key_json = json.loads(sa_key)
     else:
