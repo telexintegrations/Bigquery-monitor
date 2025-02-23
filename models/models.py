@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Union
-import time 
+
 
 class ServiceAccountKey(BaseModel):
     type: str
@@ -25,13 +25,19 @@ class ReportPayload(BaseModel):
     return_url: str
     settings: List[Setting]
 
-def convert_reports_to_string(reports: dict) -> str:
-    reports_as_string = "Date:" + str(time.strftime("%Y-%m-%d")) + "\n"
+# Convert report from dict format into a formated string as Telex channel msg
 
+def level_dict(reports: dict) -> str:
+    """
+    Convert report from dict format into a formated string as Telex channel msg
+    """
+    placeholder = ""
     for key, value in reports.items():
-        print(key, value)
-        reports_as_string += f"{key}\n"
-        for k, v in value.items():
-            reports_as_string += f"{k} : {v}\n"
-    return reports_as_string
-
+        if isinstance(value, dict) and ((len(value.keys()) > 1) or (isinstance(value[list(value.keys())[0]], dict))):
+            placeholder += ("\n" + "\033[1m" + key + "\033[0m" + "\n" + level_dict(value))
+        elif isinstance(value, list) and (len(value) > 1) and (isinstance(value[0], dict)):
+            for i in value:
+                placeholder += ("\n" + "\033[1m" + key + "\033[0m" + "\n" + level_dict(i))
+        else:
+            placeholder += (key + " : " + str(value) + "\n") 
+    return placeholder
