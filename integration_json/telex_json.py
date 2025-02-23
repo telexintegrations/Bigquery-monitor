@@ -24,7 +24,7 @@ integration_json = {
         "label": "interval",
         "type": "text",
         "required": True,
-        "default": "*/2 * * * *"
+        "default": "59 23 * * *"
       },
       {
         "label": "Service Account Key",
