@@ -10,7 +10,7 @@ This project is a Telex "interval integration" for Google's BigQuery (a distribu
 - 📝 Daily updates on BigQuery resource utilization
 - 🔒 CORS middleware enabled
 
-## Project Structure
+## Project Structures
 
 ```
 Bigquery-monitor/
@@ -21,7 +21,7 @@ Bigquery-monitor/
 │   └── telex_json.py           # JSON file configuration that Telex needs to configure the app
 ├── tests/
 │   ├── __init__.py
-│   └── test_books.py       # API endpoint tests
+│   └── test_app.py       # API endpoint tests
 ├── models/
 │   │
 │   └── models.py           # Pydantic data models
