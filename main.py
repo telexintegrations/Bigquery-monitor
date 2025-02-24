@@ -37,7 +37,7 @@ def get_integration_json(request: Request):
 @app.post("/tick")
 async def send_reports(payload: ReportPayload):
 
-    report_date = "\033[1mDate:" + str(time.strftime("%Y-%m-%d")) + "\033[0m" + "\n"
+    report_date = "Date:" + str(time.strftime("%Y-%m-%d")) + "\n"
 
     reports = await get_reports(payload)
 
