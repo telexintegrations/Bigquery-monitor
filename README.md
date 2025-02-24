@@ -92,23 +92,6 @@ uvicorn main:app
 pytest
 ```
 
-## Error Handling
-
-The API includes proper error handling for:
-
-- Non-existent books
-- Invalid book IDs
-- Invalid genre types
-- Malformed requests
-
-## Deploying behind a proxy server
-
-Here's how to deploy the app behind an nginx reverse proxy server on Google Cloud Run:
-
-First, prepare your GCP account by setting up the following 
-
-1. A project
-
 ## Contributing
 
 1. Fork the repository
