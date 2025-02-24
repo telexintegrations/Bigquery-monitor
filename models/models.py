@@ -1,5 +1,8 @@
+from bq_functions.bigquery_funcs import get_daily_slot_utilization, get_run_errors
+from google.cloud import bigquery
 from pydantic import BaseModel
 from typing import List, Union
+import asyncio
 
 
 class ServiceAccountKey(BaseModel):
@@ -25,7 +28,21 @@ class ReportPayload(BaseModel):
     return_url: str
     settings: List[Setting]
 
-# Convert report from dict format into a formated string as Telex channel msg
+async def get_reports(credentials, project_id: str, region: str) -> dict:
+    """
+    Return resource utilization and error reports as dictionary
+    """
+    
+    bigquery_client = bigquery.Client(credentials=credentials, project=project_id)
+    
+    reports = {}
+
+    reports["📋Daily Resource Utilization Report"], reports["🔴Error Reports"] = await asyncio.gather(get_daily_slot_utilization(bigquery_client, region=region), get_run_errors(bigquery_client, region=region))
+
+    if not reports["🔴Error Reports"]:
+        reports["🔴Error Reports"] = "No error reports"
+
+    return reports
 
 def level_dict(reports: dict) -> str:
     """

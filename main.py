@@ -1,12 +1,11 @@
 from ast import literal_eval
-from bq_functions.bigquery_funcs import get_daily_slot_utilization, get_run_errors
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from integration_json.telex_json import integration_json
-from models.models import ReportPayload, level_dict
+from models.models import ReportPayload, level_dict, get_reports
 import asyncio
 import httpx
 import json
@@ -37,33 +36,30 @@ def get_integration_json(request: Request):
     return integration_json
 
 @app.post("/tick")
-async def get_performance_reports(payload: ReportPayload):
+async def send_reports(payload: ReportPayload):
+    # Obtain service account key
     sa_key = (dict(payload.settings[1])["default"])
 
-    # Handle the case where the service account key is a string
+    # If service account key is a string
     if isinstance(sa_key, str):
         sa_key_json = json.loads(sa_key)
     else:
         sa_key_json = sa_key.model_dump_json()
         sa_key_json = json.loads(sa_key_json)
+    credentials = service_account.Credentials.from_service_account_info(sa_key_json)
+    scoped_credentials = credentials.with_scopes(['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/bigquery'])
     
     project_id = dict(payload.settings[3])["default"]
     region = dict(payload.settings[4])["default"]
 
-    credentials = service_account.Credentials.from_service_account_info(sa_key_json)
-    scoped_credentials = credentials.with_scopes(['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/bigquery'])
-    
-    bigquery_client = bigquery.Client(credentials=scoped_credentials, project=project_id)
-    
-    reports = {}
-    reports["📋Daily Resource Utilization Report"], reports["🔴Error Reports"] = await asyncio.gather(get_daily_slot_utilization(bigquery_client, region=region), get_run_errors(bigquery_client, region=region))
+    report_date = "\033[1mDate:" + str(time.strftime("%Y-%m-%d")) + "\033[0m" + "\n"
 
-    str_report = "\033[1mDate:" + str(time.strftime("%Y-%m-%d")) + "\033[0m" + "\n"
+    reports = await get_reports(scoped_credentials, project_id, region)
 
-    str_report += level_dict(reports)
+    string_reports = report_date + level_dict(reports)
 
     data = {
-        "message": str_report,
+        "message": string_reports,
         "username": "BigQuery Monitor",
         "event_name": "BigQuery Resources Check-In",
         "status": "success"
