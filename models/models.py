@@ -39,7 +39,7 @@ async def get_reports(payload: ReportPayload) -> dict:
     """
     # Obtain service account key
     sa_key = (dict(payload.settings[1])["default"])
-
+    print(sa_key, type(sa_key))
     # If service account key is a string
     if not sa_key:
         sa_key = os.getenv('SERVICE_ACCOUNT_KEY')
