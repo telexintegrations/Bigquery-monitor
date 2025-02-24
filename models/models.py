@@ -1,9 +1,14 @@
 from bq_functions.bigquery_funcs import get_daily_slot_utilization, get_run_errors
+from dotenv import load_dotenv
+from google.oauth2 import service_account
 from google.cloud import bigquery
 from pydantic import BaseModel
 from typing import List, Union
 import asyncio
+import json
+import os
 
+load_dotenv()
 
 class ServiceAccountKey(BaseModel):
     type: str
@@ -28,16 +33,42 @@ class ReportPayload(BaseModel):
     return_url: str
     settings: List[Setting]
 
-async def get_reports(credentials, project_id: str, region: str) -> dict:
+async def get_reports(payload: ReportPayload) -> dict:
     """
     Return resource utilization and error reports as dictionary
     """
+    # Obtain service account key
+    sa_key = (dict(payload.settings[1])["default"])
+
+    # If service account key is a string
+    if not sa_key:
+        sa_key = os.getenv('SERVICE_ACCOUNT_KEY')
+        sa_key_json = json.loads(sa_key)
+    elif isinstance(sa_key, str):
+        sa_key_json = json.loads(sa_key)
+    else:
+
+        sa_key_json = sa_key.model_dump_json()
+        sa_key_json = json.loads(sa_key_json)
     
-    bigquery_client = bigquery.Client(credentials=credentials, project=project_id)
+    credentials = service_account.Credentials.from_service_account_info(sa_key_json)
+    scoped_credentials = credentials.with_scopes([
+        'https://www.googleapis.com/auth/cloud-platform',
+        'https://www.googleapis.com/auth/bigquery'
+        ]
+        )
+    
+    project_id = dict(payload.settings[3])["default"]
+    region = dict(payload.settings[4])["default"]
+
+    bigquery_client = bigquery.Client(credentials=scoped_credentials, project=project_id)
     
     reports = {}
 
-    reports["📋Daily Resource Utilization Report (in slot milliseconds)"], reports["🔴Error Reports"] = await asyncio.gather(get_daily_slot_utilization(bigquery_client, region=region), get_run_errors(bigquery_client, region=region))
+    reports["📋Daily Resource Utilization Report (in slot milliseconds)"], reports["🔴Error Reports"] = await asyncio.gather(
+        get_daily_slot_utilization(bigquery_client, region=region),
+        get_run_errors(bigquery_client, region=region)
+        )
 
     if not reports["🔴Error Reports"]:
         reports["🔴Error Reports"] = "No error reports"
