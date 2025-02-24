@@ -3,12 +3,10 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from google.cloud import bigquery
-from google.oauth2 import service_account
 from integration_json.telex_json import integration_json
 from models.models import ReportPayload, level_dict, get_reports
 import asyncio
 import httpx
-import json
 import time
 
 app = FastAPI()
@@ -35,26 +33,13 @@ def get_integration_json(request: Request):
     integration_json["data"]["tick_url"] = f"{base_url}/tick"
     return integration_json
 
+
 @app.post("/tick")
 async def send_reports(payload: ReportPayload):
-    # Obtain service account key
-    sa_key = (dict(payload.settings[1])["default"])
-
-    # If service account key is a string
-    if isinstance(sa_key, str):
-        sa_key_json = json.loads(sa_key)
-    else:
-        sa_key_json = sa_key.model_dump_json()
-        sa_key_json = json.loads(sa_key_json)
-    credentials = service_account.Credentials.from_service_account_info(sa_key_json)
-    scoped_credentials = credentials.with_scopes(['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/bigquery'])
-    
-    project_id = dict(payload.settings[3])["default"]
-    region = dict(payload.settings[4])["default"]
 
     report_date = "\033[1mDate:" + str(time.strftime("%Y-%m-%d")) + "\033[0m" + "\n"
 
-    reports = await get_reports(scoped_credentials, project_id, region)
+    reports = await get_reports(payload)
 
     string_reports = report_date + level_dict(reports)
 
