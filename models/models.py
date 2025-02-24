@@ -37,7 +37,7 @@ async def get_reports(credentials, project_id: str, region: str) -> dict:
     
     reports = {}
 
-    reports["📋Daily Resource Utilization Report"], reports["🔴Error Reports"] = await asyncio.gather(get_daily_slot_utilization(bigquery_client, region=region), get_run_errors(bigquery_client, region=region))
+    reports["📋Daily Resource Utilization Report (in slot milliseconds)"], reports["🔴Error Reports"] = await asyncio.gather(get_daily_slot_utilization(bigquery_client, region=region), get_run_errors(bigquery_client, region=region))
 
     if not reports["🔴Error Reports"]:
         reports["🔴Error Reports"] = "No error reports"

@@ -28,7 +28,7 @@ async def get_daily_slot_utilization(client:bigquery.Client, region:str = "us") 
         return daily_utilization
     listed_results = []
     for row in results:
-        daily_utilization[row[0]] = str(row[1]) + " slot ms"
+        daily_utilization[row[0]] = str(row[1])
         listed_results.append(int(row[1
         ]))
     if len(listed_results) < 2:
@@ -117,21 +117,4 @@ async def get_run_errors(client: bigquery.Client, region:str = "us") -> dict:
             "resource_warning": row[9]
         }
     return error_reports
-
-# async def main():
-#     reports = {}
-#     reports["Daily slots usage in seconds"], reports["Error report by JobID"] = await asyncio.gather(get_daily_slot_utilization(client), get_run_errors(client))
-    
-#     print(json.dumps(reports, indent=2, default=str))
-
-# if __name__ == "__main__":
-#     with open("./sa_key.json") as json_file:
-#         json_service_key = json.load(json_file)
-
-#     creds = service_account.Credentials.from_service_account_info(json_service_key)
-#     scoped_credentials = creds.with_scopes(['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/bigquery'])
-#     project_id = "hng13-backend-projects"
-
-#     client = bigquery.Client(credentials=scoped_credentials, project=project_id)
-#     asyncio.run(main())
     
