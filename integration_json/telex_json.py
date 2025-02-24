@@ -29,7 +29,7 @@ integration_json = {
       {
         "label": "Service Account Key",
         "type": "text",
-        "required": False,
+        "required": True,
         "default": ""
       },
       {

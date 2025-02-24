@@ -41,13 +41,10 @@ async def get_reports(payload: ReportPayload) -> dict:
     sa_key = (dict(payload.settings[1])["default"])
     print(sa_key, type(sa_key))
     # If service account key is a string
-    if not sa_key:
-        sa_key = os.getenv('SERVICE_ACCOUNT_KEY')
-        sa_key_json = json.loads(sa_key)
-    elif isinstance(sa_key, str):
+    
+    if isinstance(sa_key, str):
         sa_key_json = json.loads(sa_key)
     else:
-
         sa_key_json = sa_key.model_dump_json()
         sa_key_json = json.loads(sa_key_json)
     
