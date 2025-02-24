@@ -68,7 +68,6 @@ def mock_bigquery_results():
     ]
 
 # Define tests
-
 def test_level_dict():
     test_report = {
         "Category1": {
@@ -98,8 +97,6 @@ def test_get_integration_json(test_client):
     assert data["data"]["integration_type"] == "interval"
     assert data["data"]["author"] == "Sulaimon Salako"
 
-# def test_send_reports():
-#     response = client.post("/tick")
 
 # Test BigQuery utility functions
 @pytest.mark.asyncio
